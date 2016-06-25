@@ -4,7 +4,8 @@ project(AECE)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
-set(SOURCE_FILES AefFile.cpp AefFile.h SongWithAef.cpp SongWithAef.h Engine.cpp Engine.h)
+set(HEADER_FILES AefFile.h SongWithAef.h Engine.hpp PatternRenderer.hpp AudioEvent.hpp)
+set(SOURCE_FILES AefFile.cpp AefFile.h SongWithAef.cpp Engine.cpp PatternRenderer.cpp AudioEvent.cpp)
 
 include_directories(gsl)
 

@@ -6,18 +6,23 @@
 
 #include <string>
 #include "AefFile.h"
-
+#include "typedefs.h"
 
 namespace AECE{
 
-    struct SongWithAef {
-        const std::string Name;
+    class SongWithAef {
+    public:
+        std::string Name;
         std::string Mp3;
         AefFile Aef;
+        Int64 Length;
 
-        SongWithAef(std::string mp3, std::string aef, std::string name) :
+        SongWithAef() { }
+
+        SongWithAef(std::string mp3, std::string aef, std::string name, Int64 length) :
                 Name(name),
                 Mp3(mp3),
+                Length(length),
                 Aef(AefFile::FromFile(aef)){}
     };
 

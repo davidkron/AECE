@@ -1,0 +1,10 @@
+Tempo: 90
+Instruments:
+- Name: Somename
+  Patterns:
+  - Type: Hit
+    OccoursOn: [1,2,3,4]
+    HitsPerBar: 4
+    Offset: 32
+    BarsToRepeatAfter: 1
+    BarsToRepeat: 1

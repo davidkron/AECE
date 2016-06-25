@@ -2,91 +2,96 @@
 #include <string>
 #include <algorithm>
 #include <yaml-cpp/yaml.h>
+#include <memory>
 
 #pragma once
 
+/*template <typename T>
+int indexOf(std::vector<T> ts,T item){
+    return std::find(ts.begin(),ts.end(),item) - ts.begin();
+}*/
 
-struct Location
-{
-    int Index;
-    int Value;
-    bool operator ==(const Location& other) const
-    {
-            return other.Index == Index && other.Value == Value;
+struct BasicPattern {
+    virtual int CrotchetTillFirstEvent() const = 0;
+    virtual bool IndexIsLastHit(int index) const = 0;
+    virtual int GetEventAfter(int currentEvent) const = 0;
+};
+
+class PositionalPattern : public BasicPattern {
+    std::map<int, int> LocationPattern;
+public:
+    PositionalPattern(std::map<int, int> locationPattern) : LocationPattern(locationPattern) { }
+
+    int GetLocation(int index) {
+        return LocationPattern[index];
+    }
+
+    virtual int CrotchetTillFirstEvent() const {
+        return LocationPattern.begin()->first - 1;
+    }
+
+    virtual bool IndexIsLastHit(int index) const {
+        return index == LocationPattern.rbegin()->first;
+    }
+
+    virtual int GetEventAfter(int currentEvent) const {
+        auto prevItemIterator = LocationPattern.find(currentEvent);
+        return std::next(prevItemIterator)->first;
+    }
+};
+
+class HitPattern : public BasicPattern {
+    std::vector<int> OccoursOn;
+public:
+    HitPattern(std::vector<int> occoursOn) : OccoursOn(occoursOn) { }
+
+    int CrotchetTillFirstEvent() const {
+        return OccoursOn[0] - 1;
+    }
+
+    bool IndexIsLastHit(int index) const {
+        return index == OccoursOn[OccoursOn.size()];
+    }
+
+    int GetEventAfter(int currentEvent) const {
+        return std::next(std::find(OccoursOn.begin(), OccoursOn.end(), currentEvent)) - OccoursOn.begin();
     }
 };
 
 
-struct Pattern{
-    enum Types{
-        IntensityIncrease,Hit,Positional
+struct Pattern {
+    enum Types {
+        IntensityIncrease, Hit, Positional
     };
-
+    std::shared_ptr<BasicPattern> base;
     Types Type;
-    int HitsPerBar;
     int BarsToRepeatAfter;
-    std::vector<int> OccoursOn;
+    int HitsPerBar;
     int Offset;
-    std::vector<Location> LocationPattern;
+    int index = 0;
 
-    bool ShouldRepeat(){
-      return BarsToRepeatAfter > 0;
+    bool ShouldRepeat() {
+        return BarsToRepeatAfter > 0;
     }
 
-    int TotalHits(){
-      return HitsPerBar * BarsToRepeatAfter;
+    int TimeTillNextEvent();
+
+    int Progress() {
+
     }
 
-    int CrotchetTillFirstEvent()
-    {
-        switch (Type)
-        {
-            case IntensityIncrease:
-            case Hit:
-                return OccoursOn[0] -1;
-            case Positional:
-                return LocationPattern[0].Index - 1;
-        }
+    int CrotchetTillFirstEvent() const {
+        return base->CrotchetTillFirstEvent();
     }
 
-    bool IndexIsLastHit(int index)
-    {
-        switch (Type)
-        {
-            case IntensityIncrease:
-            case Hit:
-                return index == OccoursOn[OccoursOn.size()];
-            case Positional:
-                return index == LocationPattern[LocationPattern.size()].Index;
-        }
+    int TotalHits() {
+        return HitsPerBar * BarsToRepeatAfter;
     }
 
-    int GetEventAfter(int currentEvent)
-    {
-        switch (Type)
-        {
-            case IntensityIncrease:
-            case Hit:
-            {
-                int prevItemPos = indexOf(OccoursOn,currentEvent);
-                auto nextItem = OccoursOn[prevItemPos + 1];
-                return nextItem;
-            }
-            case Positional:
-            {
-                auto prevItem2 = *std::find_if(LocationPattern.begin(),LocationPattern.end(), [&currentEvent](Location x){
-                    return x.Index == currentEvent;
-                });
-                auto prevItemPos2 = indexOf(LocationPattern,prevItem2);
-                auto nextItem2 = LocationPattern[prevItemPos2 + 1];
-                return nextItem2.Index;
-            }
-        }
-    }
-
-    template <typename T>
-    int indexOf(std::vector<T> ts,T item){
-        return std::find(ts.begin(),ts.end(),item) - ts.begin();
+public:
+    template<typename T>
+    T *As() const {
+        return dynamic_cast<T *>(base.get());
     }
 };
 
@@ -125,24 +130,35 @@ namespace YAML {
     struct convert<Instrument> {
         static bool decode(const Node& node, Instrument& rhs) {
             rhs.Name = node["Name"].as<std::string>();
-            rhs.Patterns = node["Patterns"].as<std::vector<Pattern>>();
+            rhs.Patterns = std::move(node["Patterns"].as<std::vector<Pattern>>());
             return true;
         }
     };
 
+#include <memory>
+
     template<>
     struct convert<Pattern> {
         static bool decode(const Node& node, Pattern& rhs) {
-            rhs.BarsToRepeatAfter = node["BarsToRepeatAfter"].as<int>();
-            rhs.HitsPerBar = node["HitsPerBar"].as<int>();
+
             rhs.Type = node["Type"].as<Pattern::Types>();
 
-            if(rhs.Type == Pattern::Types::Hit || rhs.Type == Pattern::Types::IntensityIncrease)
-                rhs.OccoursOn = node["OccoursOn"].as<std::vector<int>>();
+            switch (rhs.Type) {
+                case Pattern::Types::Positional: {
+                    auto map = node["LocationPattern"].as<std::map<int, int>>();
+                    rhs.base.reset(new PositionalPattern(map));
+                    break;
+                }
+                case Pattern::Types::Hit:
+                case Pattern::Types::IntensityIncrease: {
+                    auto patternVector = node["OccoursOn"].as<std::vector<int>>();
+                    rhs.base.reset(new HitPattern(patternVector));
+                    break;
+                }
+            }
 
-            if(rhs.Type == Pattern::Types::Positional)
-                rhs.LocationPattern = node["LocationPattern"].as<std::vector<Location>>();
-
+            rhs.BarsToRepeatAfter = node["BarsToRepeatAfter"].as<int>();
+            rhs.HitsPerBar = node["HitsPerBar"].as<int>();
             rhs.Offset = node["Offset"].as<int>();
             return true;
         }
@@ -155,14 +171,6 @@ namespace YAML {
             if(str == "IntensityIncrease") rhs = Pattern::Types::IntensityIncrease;
             if(str == "Hit") rhs = Pattern::Types::Hit;
             if(str == "Positional") rhs = Pattern::Types::Positional;
-            return true;
-        }
-    };
-    template<>
-    struct convert<Location> {
-        static bool decode(const Node& node, Location& rhs) {
-            rhs.Index = node["Index"].as<int>();
-            rhs.Value = node["Value"].as<int>();
             return true;
         }
     };

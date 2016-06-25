@@ -1,8 +1,38 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <iostream>
+#include <Engine.hpp>
 
 using namespace sf;
+
+class AECEWrapper {
+    std::map<std::string, std::unique_ptr<sf::Music>> _songs;
+    std::unique_ptr<AECE::Engine> _engine;
+public:
+    AECEWrapper() {
+        std::unique_ptr<sf::Music> music = std::make_unique<sf::Music>();
+        music->openFromFile("Songs/Alan_Walker_Fade.ogg");
+
+        auto song = AECE::SongWithAef("Songs/Alan_Walker_Fade.ogg", "Songs/Alan_Walker_Fade.aef", "Fade",
+                                      music->getDuration().asMicroseconds());
+        std::vector<AECE::SongWithAef> songsWithAef;
+        songsWithAef.push_back(song);
+
+        _songs["Fade"] = std::move(music);
+        _engine = std::make_unique<AECE::Engine>(songsWithAef,
+                                                 [=](std::string song) { _songs[song]->play(); },
+                                                 [=](std::string song) { return _songs[song]->getPlayingOffset().asMicroseconds(); }
+        );
+    }
+
+    void Play(std::string song) {
+        _engine->StartPlaying(song);
+    }
+
+    std::vector<AECE::AudioEvent> QueryEvents() {
+        return _engine->QueryEvents();
+    }
+};
 
 int main()
 {
@@ -10,42 +40,30 @@ int main()
     CircleShape shape(100.f);
     shape.setFillColor(Color::Green);
 
-    sf::Music music;
-    if (!music.openFromFile("Songs/Alan_Walker_Fade.ogg"))
-        return -1; // error
-    music.play();
+    AECEWrapper engine;
+
+    engine.Play("Fade");
+
+    window.setFramerateLimit(30);
 
     while (window.isOpen())
     {
         Event event;
+        if (shape.getFillColor() == Color::Red)
+            shape.setFillColor(Color::Green);
         while (window.pollEvent(event))
         {
             if (event.type == Event::Closed)
                 window.close();
             if (event.type == sf::Event::EventType::KeyPressed){
-
-                // Up and down to control volume
-                if (event.key.code == sf::Keyboard::Key::Down)
-                    music.setPitch(music.getPitch() + 0.1f);
                 if (event.key.code == sf::Keyboard::Key::Up)
-                    music.setPitch(music.getPitch() - 0.1f);
-
-
-                // Left and right to control tracking position
-                if (event.key.code == sf::Keyboard::Key::Right){
-                    auto newPos = music.getPlayingOffset() + sf::seconds(5);
-                    music.setPlayingOffset(sf::Time(newPos));
-                }
-
-                if (event.key.code == sf::Keyboard::Key::Left){
-                    auto newPos = music.getPlayingOffset() - sf::seconds(5);
-                    if (newPos.asSeconds() <= 0.0f) newPos = sf::seconds(0);
-                    music.setPlayingOffset(sf::Time(newPos));
-                }
-
-                std::cout << "Current volume is :" << music.getVolume() << " position is: "
-                << music.getPlayingOffset().asSeconds() << std::endl;
+                    shape.setFillColor(Color::Red);
             }
+        }
+
+        for (auto &event : engine.QueryEvents()) {
+
+            shape.setFillColor(Color::Red);
         }
 
         window.clear();

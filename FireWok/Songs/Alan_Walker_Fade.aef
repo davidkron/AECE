@@ -1,0 +1,61 @@
+Tempo: 90
+Instruments: 
+- Name: HighPitchGlider
+  Patterns: 
+  - Type: Positional
+    LocationPattern:
+        1: 1
+        4: 2
+        5: 3
+        8: 4
+        #9: 5
+        13: 0
+    HitsPerBar: 4
+    Offset: 16
+    BarsToRepeatAfter: 4
+  - Type: Hit
+    OccoursOn: [1,2,3,4]
+    HitsPerBar: 4
+    Offset: 32
+    BarsToRepeatAfter: 1
+- Name: HighPitchBam
+  Patterns: 
+  - Type: Hit
+    OccoursOn: [9]
+    HitsPerBar: 4
+    Offset: 16
+    BarsToRepeatAfter: 4
+- Name: Balls
+  Patterns: 
+  - Type: Positional
+    LocationPattern: 
+       1: -1
+       2: -1
+       3: 1
+       4: 1
+       5: -1
+       6: -1
+       7: 1
+       8: 1
+    HitsPerBar: 8
+    Offset: 0
+    BarsToRepeatAfter: 1
+- Name: IntensityIncrease
+  Patterns: 
+  - Type: IntensityIncrease
+    OccoursOn: [1]
+    HitsPerBar: 4
+    Offset: 32 
+    BarsToRepeatAfter: 4
+- Name: Kling
+  Patterns:  
+  - Type: Hit
+    OccoursOn: [2,6,8,10,12,14,16]
+    HitsPerBar: 4
+    Offset: 32
+    BarsToRepeatAfter: 4
+    
+    #9  > Sprid (32)
+    #13 > Upp (48)
+    #17 > runt (64)
+    #21 spräng (80)

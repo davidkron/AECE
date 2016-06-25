@@ -1641,7 +1641,7 @@ checkpoints to implement a resource leak checker, for example.
 
 _Availability:_ Linux, Windows, Mac; since v1.4.0.
 
-## Defining Event Listeners ##
+## Defining AudioEvent Listeners ##
 
 To define a event listener, you subclass either
 [testing::TestEventListener](../include/gtest/gtest.h#L855)
@@ -1689,7 +1689,7 @@ state.  Here's an example:
   };
 ```
 
-## Using Event Listeners ##
+## Using AudioEvent Listeners ##
 
 To use the event listener you have defined, add an instance of it to
 the Google Test event listener list (represented by class
