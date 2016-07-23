@@ -19,4 +19,16 @@ namespace AECE {
 
 }
 
+namespace YAML {
+    template<>
+    struct convert<AECE::AudioEvent> {
+        static Node encode(AECE::AudioEvent &rhs) {
+            Node n;
+            n["Id"] = rhs.InstrumentId;
+            n["Kind"] = rhs.Kind;
+            n["Parameter"] = rhs.Parameter;
+        }
+    };
+}
+
 #endif //FIREWOK_AUDIOEVENT_HPP

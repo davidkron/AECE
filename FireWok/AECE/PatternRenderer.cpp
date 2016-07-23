@@ -7,7 +7,7 @@
 using namespace AECE;
 using namespace std;
 
-map<Int64, vector<AudioEvent>> AECE::PatternRenderer::RenderSong(SongWithAef song) {
+RenderedAefEvents AECE::PatternRenderer::RenderSong(SongWithAef song) {
     map<Int64, vector<AudioEvent>> Events;
     auto bps = 60.0f / song.Aef.Tempo;
     auto instrumentId = 0;
@@ -29,15 +29,17 @@ void AECE::PatternRenderer::RenderPattern(const Pattern &pattern, int instrument
         case Pattern::Types::IntensityIncrease:
         case Pattern::Types::Hit:
             for (Int64 i = offset; i < songLength; i += timeBetweenHits) {
-                Events->at(i).push_back(AudioEvent(instrument, pattern.Type));
+                (*Events)[i].push_back(AudioEvent(instrument, pattern.Type));
             }
+            break;
         case Pattern::Types::Positional:
             for (Int64 i = offset + pattern.CrotchetTillFirstEvent() * timeBetweenHits; i < songLength;) {
-                Events->at(i).push_back(
+                (*Events)[i].push_back(
                         AudioEvent(instrument, pattern.Type,
                                    pattern.As<PositionalPattern>()->GetLocation(i)));
                 int timeTillNextEvent = 0;
                 i += timeBetweenHits * timeTillNextEvent;
+                break;
             }
     }
 }
