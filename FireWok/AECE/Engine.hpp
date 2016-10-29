@@ -9,6 +9,7 @@
 #include "typedefs.h"
 #include "PatternRenderer.hpp"
 #include "AudioEvent.hpp"
+#include <functional>
 
 namespace AECE {
 

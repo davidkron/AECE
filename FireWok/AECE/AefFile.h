@@ -1,7 +1,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <yaml-cpp/yaml.h>
+#include <yaml-cpp\yaml.h>
 #include <memory>
 
 #pragma once
@@ -173,6 +173,13 @@ namespace YAML {
             if(str == "Positional") rhs = Pattern::Types::Positional;
             return true;
         }
+		static Node encode(const Pattern::Types& rhs) {
+			Node n;
+			if (rhs == Pattern::Types::IntensityIncrease) n = "IntensityIncrease";
+			if (rhs == Pattern::Types::Hit ) n = "Hit";
+			if (rhs == Pattern::Types::Positional) n = "Positional";
+			return n;
+		}
     };
 }
 
